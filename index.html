@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Candy Saga | Sweet Reels</title>
+<style>
+:root{--pink:#ff75c8;--gold:#ffe27a;--purple:#32104f;--deep:#120822;--panel:#29143e}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(ellipse at 50% -10%,#79329a 0,#32104f 40%,#10071e 100%);overflow-x:hidden}
+button,select{font:inherit}
+button{cursor:pointer;color:#fff;border:1px solid #a77bbd;background:#43205d;border-radius:12px;padding:10px 14px;font-weight:800;transition:.15s}
+button:hover{filter:brightness(1.18);transform:translateY(-1px)}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.wrap{max-width:1000px;margin:auto;padding:20px 16px 36px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:clamp(27px,5vw,43px);font-weight:1000;letter-spacing:1px;color:var(--gold);text-shadow:0 4px #a33285,0 0 22px #ff83d5}
+.tag{font-size:11px;letter-spacing:3px;color:#e9c9fa}
+.wallet{background:#251139;border:1px solid #8b5ba7;border-radius:30px;padding:11px 16px;font-weight:800}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 245px;gap:16px;margin-top:20px}
+.game{min-width:0}
+.machine{position:relative;padding:14px;background:linear-gradient(145deg,#ff9ed5,#a33ab1 48%,#552477);border:3px solid var(--gold);border-radius:25px;box-shadow:0 9px 0 #4b1b61,0 0 35px #e75fc066}
+.machine-head{display:flex;justify-content:space-between;font-size:12px;font-weight:900;margin:0 4px 10px}
+.reels{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;background:#1d0b32;padding:9px;border-radius:16px;border:1px solid #f6b7ec}
+.symbol{aspect-ratio:1;display:grid;place-items:center;min-width:0;border-radius:12px;background:linear-gradient(145deg,#fff6ff,#e7baff 72%,#bb77d4);box-shadow:inset 0 -5px 0 #71318a44;font-size:clamp(23px,5vw,48px);text-shadow:0 3px 4px #6d2b7a66;user-select:none}
+.symbol.spinning{animation:reel .11s linear infinite;filter:blur(1.5px);background:linear-gradient(145deg,#fff8ff,#f8a9e5 55%,#a84ec2)}
+.symbol.stopping{animation:reelStop .42s cubic-bezier(.16,.9,.25,1.2) both}
+.symbol.drop{animation:candyDrop .38s cubic-bezier(.2,.8,.2,1) both}
+.machine.is-spinning{animation:machinePulse .7s ease-in-out infinite alternate;box-shadow:0 9px 0 #4b1b61,0 0 30px #ff80d5,0 0 65px #ffb1e8}
+.machine.is-winning{animation:winShake .38s ease-in-out 2;box-shadow:0 9px 0 #4b1b61,0 0 45px #ffe27a,0 0 90px #ff75c8}
+.spin.is-spinning{animation:buttonPulse .48s ease-in-out infinite alternate}
+.spin.is-spinning:before{content:'✦ ';animation:twinkle .35s infinite alternate}
+@keyframes reelStop{0%{transform:translateY(-34px) scaleY(1.2);filter:blur(3px)}65%{transform:translateY(5px) scaleY(.88)}100%{transform:translateY(0) scaleY(1);filter:blur(0)}}
+@keyframes candyDrop{0%{transform:translateY(-55px) scale(.72);opacity:.1}65%{transform:translateY(8px) scale(1.12);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes machinePulse{to{filter:brightness(1.14);transform:translateY(-2px)}}
+@keyframes winShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px) rotate(-.4deg)}75%{transform:translateX(5px) rotate(.4deg)}}
+@keyframes buttonPulse{to{filter:brightness(1.22);transform:scale(1.035)}}
+@keyframes twinkle{to{opacity:.2;transform:scale(.7)}}
+.symbol.winner{animation:winpop .42s ease-in-out infinite alternate;background:linear-gradient(145deg,#fff6a1,#ff9de0)}
+@keyframes reel{to{transform:translateY(4px) rotate(3deg);filter:brightness(1.4)}}
+@keyframes winpop{to{transform:scale(.83) rotate(7deg);filter:brightness(1.35)}}
+.status{height:46px;display:grid;place-items:center;text-align:center;color:#fff2a6;font-weight:1000;letter-spacing:.5px;font-size:14px}
+.winrow{display:flex;justify-content:space-between;font-size:12px;font-weight:900}
+.winrow b{color:var(--gold);font-size:16px}
+.controls{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:9px;margin-top:16px}
+.controlbox,.panel{background:linear-gradient(145deg,#32194b,#211032);border:1px solid #70458b;border-radius:15px;padding:12px}
+.label{font-size:10px;color:#d9b9ec;letter-spacing:1px;font-weight:900}
+.betline{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:7px}
+.betline button{padding:5px 10px}
+.betvalue{font-weight:1000;color:var(--gold)}
+.spin{background:linear-gradient(#fff28a,#ff9b36);border:2px solid #fff1a8;color:#59213f;font-size:22px;box-shadow:0 5px 0 #a74b37;border-radius:17px}
+.spin:active{transform:translateY(4px);box-shadow:0 1px 0 #a74b37}
+.spin small{display:block;font-size:10px;letter-spacing:1px}
+.auto-toggle{width:100%;margin-top:8px;font-size:11px;padding:7px;background:#4a245f;border:1px solid #a66fc0;border-radius:9px;color:#fff}
+.auto-toggle.running{background:#a34635;border-color:#ffb69c}
+.extras{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.extras button{flex:1;font-size:12px;min-width:95px}
+.on{background:#a34683;border-color:#ffb8e1}
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.panel h3{font-size:13px;margin:0 0 10px;color:var(--gold)}
+.meter{height:13px;border-radius:20px;background:#12091d;overflow:hidden;border:1px solid #79558e}
+.meter>div{height:100%;width:0;background:linear-gradient(90deg,#f58ad6,#ffe76b);transition:width .3s}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.stat{background:#1b0d2b;padding:10px;border-radius:10px;text-align:center}
+.stat strong{display:block;color:var(--gold);font-size:18px}
+.stat span{font-size:10px;color:#d8c0e7}
+.paytable{font-size:12px;line-height:1.8;color:#e8d4f3}
+.paytable span{float:right;color:var(--gold);font-weight:900}
+.history{font-size:11px;color:#e5cbed;line-height:1.7;max-height:115px;overflow:auto}
+.footer{margin-top:16px;text-align:center;color:#bfa2d1;font-size:10px}
+.modal{position:fixed;inset:0;background:#10051de8;display:none;place-items:center;padding:20px;z-index:10}
+.modal.show{display:grid}
+.modalbox{width:min(390px,100%);padding:28px;text-align:center;border:2px solid var(--gold);border-radius:24px;background:linear-gradient(145deg,#85359b,#32104f);box-shadow:0 0 55px #ff76d8}
+.modalbox .emoji{font-size:55px}
+.modalbox h2{font-size:clamp(30px,8vw,48px);margin:8px 0;color:var(--gold);text-shadow:0 4px #9b367b}
+.modalbox p{color:#f4dffb}
+.particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.particle{position:absolute;font-size:23px;animation:fly 1.2s ease-out forwards}
+@keyframes fly{to{transform:translateY(-110px) rotate(220deg) scale(.2);opacity:0}}
+select{background:#351a52;border:1px solid #9b70b0;border-radius:9px;color:white;padding:8px;width:100%;margin-top:7px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar .wide{grid-column:1/-1}.wrap{padding:14px 10px 28px}.machine{padding:8px}.reels{gap:4px;padding:6px}.symbol{border-radius:8px}.controls{gap:6px}.controlbox{padding:9px 5px}.spin{font-size:18px;padding:10px 4px}}
+@media(max-width:360px){.sidebar{grid-template-columns:1fr}.sidebar .wide{grid-column:auto}.reels{gap:3px}.symbol{font-size:22px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+<header class="top">
+<div>
+<div class="logo">🍭 CANDY SAGA</div>
+<div class="tag">SWEETEN YOUR FORTUNE</div>
+</div>
+<div class="wallet">🪙 BALANCE: <span id="balance">10,000</span></div>
+</header>
+
+<div class="layout">
+<main class="game">
+<section class="machine" id="machine">
+<div class="particles" id="particles"></div>
+<div class="machine-head">
+<span>✨ SUGAR RUSH REELS</span>
+<span id="multiplier">TUMBLE ×1</span>
+</div>
+<div class="reels" id="reels" aria-label="Six columns by five rows of slot symbols"></div>
+<div class="status" id="status" aria-live="polite">🍬 READY FOR A SWEET WIN? 🍬</div>
+<div class="winrow">
+<span>WIN: <b id="lastWin">0</b></span>
+<span>BEST WIN: <b id="bestWin">0</b></span>
+</div>
+</section>
+
+<div class="controls">
+<div class="controlbox">
+<div class="label">BET PER SPIN</div>
+<div class="betline">
+<button id="minus" aria-label="Decrease bet">−</button>
+<span class="betvalue" id="bet">100</span>
+<button id="plus" aria-label="Increase bet">+</button>
+</div>
+</div>
+
+<button class="spin" id="spin">SPIN 🍭<small>LET'S GO!</small></button>
+
+<div class="controlbox">
+<div class="label">AUTOPLAY</div>
+<select id="auto">
+<option value="10">10 SPINS</option>
+<option value="25">25 SPINS</option>
+<option value="50">50 SPINS</option>
+<option value="100">100 SPINS</option>
+</select>
+<button class="auto-toggle" id="autoToggle" type="button">▶ START AUTOPLAY</button>
+</div>
+</div>
+
+<div class="extras">
+<button id="maxbet">⚡ MAX BET</button>
+<button id="turbo">🚀 TURBO: OFF</button>
+<button id="bonus">🎁 FREE SPIN (0)</button>
+<button id="buyBonus">💎 BUY BONUS</button>
+<button id="sound">🔊 SOUND: ON</button>
+<button id="rules">📖 PAYTABLE</button>
+<button id="reset">↻ RESET</button>
+</div>
+</main>
+
+<aside class="sidebar">
+<section class="panel wide">
+<h3>🌟 SUGAR RUSH METER</h3>
+<div class="meter"><div id="meterFill"></div></div>
+<div class="label" style="margin-top:8px"><span id="meterText">0 / 100</span> • Fill the meter to earn a free spin.</div>
+</section>
+
+<section class="panel">
+<h3>📊 GAME STATS</h3>
+<div class="stats">
+<div class="stat"><strong id="spins">0</strong><span>SPINS</span></div>
+<div class="stat"><strong id="totalWon">0</strong><span>TOTAL WON</span></div>
+<div class="stat"><strong id="freeSpins">0</strong><span>FREE SPINS</span></div>
+<div class="stat"><strong id="best">0</strong><span>BEST WIN</span></div>
+</div>
+</section>
+
+<section class="panel">
+<h3>🍬 PAYTABLE</h3>
+<div class="paytable">
+🍭 Lollipop <span>8× bet</span><br>
+🍬 Candy <span>7× bet</span><br>
+🍒 Cherry <span>6× bet</span><br>
+🍇 Grapes <span>5× bet</span><br>
+🍓 Strawberry <span>4× bet</span><br>
+🍉 Watermelon <span>3× bet</span><br>
+🐻 Gummy bear <span>Bonus trigger</span><br>
+<small>8+ matching symbols pay. Values are illustrative demo payouts.</small>
+</div>
+</section>
+
+<section class="panel wide">
+<h3>🧾 RECENT WINS</h3>
+<div class="history" id="history">Your wins will appear here.</div>
+</section>
+</aside>
+</div>
+
+<div class="footer">CANDY SAGA • DEMO SLOT GAME • VIRTUAL CREDITS ONLY • NO CASH VALUE</div>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+<div class="modalbox">
+<div class="emoji" id="modalEmoji">🏆</div>
+<h2 id="modalTitle">SWEET WIN!</h2>
+<p id="modalText">You hit a sweet combination!</p>
+<button id="modalClose" class="spin">CONTINUE 🍭</button>
+</div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const symbols=['🍬','🍭','🍒','🍇','🍉','🍓','🍋','🍍','🍪','🐻'];
+const weights=[17,15,13,12,11,10,9,7,5,3];
+const payout={'🍬':7,'🍭':8,'🍒':6,'🍇':5,'🍉':3,'🍓':4,'🍋':3,'🍍':3,'🍪':4};
+
+let balance=10000,bet=100,busy=false,spins=0,totalWon=0,best=0,free=0,meter=0,turbo=false,sound=true,autoRemaining=0,autoTimer=null,autoRunning=false,audioCtx=null,grid=[];
+const cells=30;
+
+function fmt(n){return Math.floor(n).toLocaleString()}
+
+function randomSymbol(){
+let r=Math.random()*102;
+for(let i=0;i<weights.length;i++){
+r-=weights[i];
+if(r<=0)return symbols[i];
+}
+return symbols[0];
+}
+
+function render(){
+const el=$('reels');
+el.innerHTML='';
+grid.forEach((s,i)=>{
+let d=document.createElement('div');
+d.className='symbol';
+d.textContent=s;
+d.dataset.index=i;
+el.append(d);
+});
+}
+
+function update(){
+$('balance').textContent=fmt(balance);
+$('bet').textContent=fmt(bet);
+$('lastWin').textContent=fmt(lastPayout);
+$('bestWin').textContent=fmt(best);
+$('spins').textContent=spins;
+$('totalWon').textContent=fmt(totalWon);
+$('freeSpins').textContent=free;
+$('best').textContent=fmt(best);
+$('meterFill').style.width=meter+'%';
+$('meterText').textContent=meter+' / 100';
+$('bonus').textContent='🎁 FREE SPIN ('+free+')';
+$('bonus').disabled=busy||free===0;
+$('buyBonus').disabled=busy||balance<bet*75;
+$('spin').disabled=busy;
+$('autoToggle').textContent=autoRunning?'■ STOP AUTOPLAY':'▶ START AUTOPLAY';
+$('autoToggle').classList.toggle('running',autoRunning);
+$('autoToggle').disabled=busy&&!autoRunning;
+$('minus').disabled=busy||bet<=10;
+$('plus').disabled=busy||bet>=1000;
+$('maxbet').disabled=busy;
+}
+
+let lastPayout=0;
+
+function tone(freq=500,dur=.12,type='sine',vol=.06){
+if(!sound)return;
+try{
+audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
+if(audioCtx.state==='suspended')audioCtx.resume();
+let o=audioCtx.createOscillator(),g=audioCtx.createGain();
+o.type=type;
+o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+g.gain.setValueAtTime(vol,audioCtx.currentTime);
+g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);
+o.connect(g);
+g.connect(audioCtx.destination);
+o.start();
+o.stop(audioCtx.currentTime+dur);
+}catch(e){}
+}
+
+function soundSpin(){
+tone(180,.18,'sawtooth',.035);
+setTimeout(()=>tone(260,.15,'triangle',.035),120);
+}
+
+function sparkle(){
+let box=$('particles');
+for(let i=0;i<22;i++){
+let p=document.createElement('span');
+p.className='particle';
+p.textContent=['✨','⭐','🍬','💖','🍭'][i%5];
+p.style.left=Math.random()*95+'%';
+p.style.top=(45+Math.random()*45)+'%';
+box.append(p);
+setTimeout(()=>p.remove(),1250);
+}
+}
+
+function status(t){$('status').textContent=t}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+function showModal(title,text,emoji){
+$('modalTitle').textContent=title;
+$('modalText').textContent=text;
+$('modalEmoji').textContent=emoji;
+$('modal').classList.add('show');
+tone(880,.3,'triangle');
+}
+
+function hideModal(){$('modal').classList.remove('show')}
+
+function logWin(amount,label){
+let h=$('history');
+if(h.textContent==='Your wins will appear here.')h.textContent='';
+let row=document.createElement('div');
+row.textContent='✨ '+label+' +'+fmt(amount)+' credits';
+h.prepend(row);
+while(h.children.length>8)h.lastChild.remove();
+}
+
+function findWins(){
+let counts={};
+grid.forEach(s=>{if(payout[s])counts[s]=(counts[s]||0)+1});
+let winner=Object.entries(counts).filter(([s,n])=>n>=8).sort((a,b)=>b[1]-a[1]);
+if(!winner.length)return null;
+let [sym,count]=winner[0];
+let indices=[];
+grid.forEach((s,i)=>{if(s===sym)indices.push(i)});
+return{sym,count,indices};
+}
+
+async function tumble(){
+let multiplier=1,total=0,chain=0;
+while(chain<8){
+let result=findWins();
+if(!result)break;
+chain++;
+$('multiplier').textContent='TUMBLE ×'+multiplier;
+result.indices.forEach(i=>$('reels').children[i]?.classList.add('winner'));
+tone(560+chain*100,.16,'triangle');
+sparkle();
+status(chain>1?'🔥 CASCADE WIN! ×'+multiplier:'🍬 '+result.count+' '+result.sym+' MATCH!');
+let amount=Math.round(bet*payout[result.sym]*result.count/8*multiplier);
+total+=amount;
+$('machine').classList.add('is-winning');
+await sleep(turbo?140:420);
+let remove=new Set(result.indices);
+grid=grid.map((s,i)=>remove.has(i)?randomSymbol():s);
+render();
+[...$('reels').children].forEach((el,i)=>{
+if(remove.has(i)){
+el.classList.add('drop');
+el.style.animationDelay=(i%6)*22+'ms';
+}
+});
+await sleep(turbo?100:330);
+$('machine').classList.remove('is-winning');
+multiplier=Math.min(multiplier+1,10);
+}
+return total;
+}
+
+async function spin(useFree=false){
+if(busy)return;
+if(!useFree&&free===0&&balance<bet){
+status('NOT ENOUGH CREDITS. LOWER YOUR BET.');
+stopAuto();
+return;
+}
+
+busy=true;
+update();
+
+if(useFree){free--}
+else{balance-=bet}
+
+spins++;
+lastPayout=0;
+update();
+soundSpin();
+
+$('machine').classList.add('is-spinning');
+$('spin').classList.add('is-spinning');
+
+grid=Array.from({length:cells},randomSymbol);
+render();
+
+const reelCells=[...$('reels').children];
+reelCells.forEach((el,i)=>{
+el.classList.add('spinning');
+el.style.animationDelay=(i%6)*18+'ms';
+});
+
+await sleep(turbo?320:760);
+
+for(let col=0;col<6;col++){
+await sleep(turbo?35:105);
+for(let row=0;row<5;row++){
+let el=$('reels').children[row*6+col];
+if(el){
+el.classList.remove('spinning');
+el.classList.add('stopping');
+}
+}
+tone(210+col*48,.07,'triangle',.025);
+}
+
+await sleep(turbo?100:260);
+$('machine').classList.remove('is-spinning');
+$('spin').classList.remove('is-spinning');
+
+let win=await tumble();
+let bears=grid.filter(s=>s==='🐻').length;
+
+if(bears>=4){
+let awarded=Math.min(3+Math.floor((bears-4)/2),8);
+free+=awarded;
+showModal('BONUS UNLOCKED!',awarded+' free spins added to your game!','🐻');
+sparkle();
+}
+
+if(win>0){
+balance+=win;
+lastPayout=win;
+totalWon+=win;
+best=Math.max(best,win);
+meter=Math.min(100,meter+Math.min(45,Math.ceil(win/Math.max(1,bet))*5));
+status('🎉 SWEET WIN! +'+fmt(win)+' CREDITS');
+$('machine').classList.add('is-winning');
+setTimeout(()=>$('machine').classList.remove('is-winning'),850);
+logWin(win,'Candy combo');
+tone(740,.3,'sine');
+setTimeout(()=>tone(990,.28,'triangle'),130);
+setTimeout(()=>tone(1250,.35,'triangle'),270);
+sparkle();
+
+if(win>=bet*20){
+showModal('SUGAR RUSH!','Amazing! You won '+fmt(win)+' virtual credits!','🏆');
+}
+}else{
+status(bears>=4?'🐻 THE GUMMY BEARS BROUGHT A BONUS!':'NO MATCH THIS TIME. TRY AGAIN!');
+meter=Math.min(100,meter+3);
+}
+
+if(meter>=100){
+meter=0;
+free++;
+showModal('SUGAR METER FULL!','You earned 1 bonus free spin.','🌟');
+}
+
+$('multiplier').textContent='TUMBLE ×1';
+busy=false;
+update();
+}
+
+function stopAuto(){
+autoRunning=false;
+autoRemaining=0;
+if(autoTimer)clearTimeout(autoTimer);
+autoTimer=null;
+update();
+}
+
+async function runAuto(){
+if(autoRunning){
+stopAuto();
+return;
+}
+
+const count=Number($('auto').value)||10;
+
+if(balance<bet&&free===0){
+status('NOT ENOUGH CREDITS TO START AUTOPLAY.');
+return;
+}
+
+autoRunning=true;
+autoRemaining=count;
+update();
+
+while(autoRunning&&autoRemaining>0){
+if(free<=0&&balance<bet){
+status('AUTOPLAY STOPPED: NOT ENOUGH CREDITS.');
+break;
+}
+
+await spin(free>0);
+autoRemaining--;
+update();
+
+if(autoRunning&&autoRemaining>0){
+await new Promise(resolve=>{
+autoTimer=setTimeout(resolve,turbo?280:700);
+});
+}
+}
+
+stopAuto();
+
+if(autoRemaining===0)status('AUTOPLAY COMPLETE! 🍬');
+}
+
+$('spin').addEventListener('click',()=>spin(free>0?true:false));
+
+$('minus').addEventListener('click',()=>{
+bet=Math.max(10,bet-10);
+update();
+});
+
+$('plus').addEventListener('click',()=>{
+bet=Math.min(1000,bet+10);
+update();
+});
+
+$('maxbet').addEventListener('click',()=>{
+bet=1000;
+update();
+});
+
+$('bonus').addEventListener('click',()=>{
+if(free>0)spin(true);
+});
+
+$('turbo').addEventListener('click',()=>{
+turbo=!turbo;
+$('turbo').textContent='🚀 TURBO: '+(turbo?'ON':'OFF');
+$('turbo').classList.toggle('on',turbo);
+});
+
+$('sound').addEventListener('click',()=>{
+sound=!sound;
+$('sound').textContent=(sound?'🔊 SOUND: ON':'🔇 SOUND: OFF');
+$('sound').classList.toggle('on',!sound);
+if(sound)tone(660,.15);
+});
+
+$('autoToggle').addEventListener('click',runAuto);
+
+$('buyBonus').addEventListener('click',()=>{
+if(busy)return;
+
+const cost=bet*75;
+
+if(balance<cost){
+status('NOT ENOUGH CREDITS. BONUS BUY COSTS '+fmt(cost)+'.');
+return;
+}
+
+if(!confirm('Buy 10 bonus free spins for '+fmt(cost)+' virtual credits?'))return;
+
+balance-=cost;
+free+=10;
+status('🎁 BONUS PURCHASED! 10 FREE SPINS ADDED.');
+showModal('BONUS BOUGHT!','10 free spins have been added. Cost: '+fmt(cost)+' virtual credits.','💎');
+update();
+});
+
+$('rules').addEventListener('click',()=>{
+showModal('HOW TO PLAY','Match 8 or more of the same candy anywhere on the 6×5 board. Winning candies tumble away and new candies fall in. Cascades increase the multiplier. Four or more gummy bears award bonus spins. Fill the Sugar Rush meter for another free spin. All credits and payouts are simulated.','📖');
+});
+
+$('modalClose').addEventListener('click',hideModal);
+
+$('modal').addEventListener('click',e=>{
+if(e.target===$('modal'))hideModal();
+});
+
+$('reset').addEventListener('click',()=>{
+if(busy)return;
+stopAuto();
+balance=10000;
+bet=100;
+spins=0;
+totalWon=0;
+best=0;
+free=0;
+meter=0;
+lastPayout=0;
+status('🍬 NEW GAME! GOOD LUCK!');
+$('history').textContent='Your wins will appear here.';
+grid=Array.from({length:cells},randomSymbol);
+render();
+update();
+});
+
+$('app').addEventListener('keydown',e=>{
+if(e.code==='Space'&&!['BUTTON','SELECT'].includes(document.activeElement.tagName)){
+e.preventDefault();
+spin(free>0);
+}
+});
+
+grid=Array.from({length:cells},randomSymbol);
+render();
+update();
+})();
+</script>
+</body>
+</html>
